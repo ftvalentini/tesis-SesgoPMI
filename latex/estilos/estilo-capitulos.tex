@@ -1,0 +1,16 @@
+
+\usepackage{titlesec}
+\definecolor{gray75}{gray}{0.75}
+\newcommand{\hsp}{\hspace{4pt}}
+
+\titlespacing*{\chapter}{0pt}{30pt}{20pt}
+\titleformat{\chapter}[display]
+  {\bfseries\LARGE\raggedleft}
+  {\huge\chaptertitlename \resizebox{!}{1.2cm}{
+   \,\thechapter\,}\rlap{\color{gray}\rule{5cm}{1.2cm}}
+  }
+  {12pt}{\raggedright\bfseries\Huge}
+
+\titleformat{\section}[hang]{\Large\bfseries}{\thesection\hsp\textcolor{gray75}{|}\hsp}{0pt}{\Large\bfseries}
+
+\titleformat{\subsection}[hang]{\large\bfseries}{\thesubsection.\hsp\hsp}{0pt}{\large\bfseries}

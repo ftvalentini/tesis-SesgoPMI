@@ -1,0 +1,32 @@
+
+\chapter{Introducción} \label{cap:intro}
+
+% Estructura:
+% - motivacion
+% - sesgos en modelos vs sesgos en textos
+% - objetivos / preguntas
+% - organizacion
+
+
+El campo de investigación de la equidad en la Inteligencia Artificial (\emph{fairness in AI}) ha recibido una gran atención en los últimos años, impulsado por la necesidad de que los algoritmos basados en aprendizaje automático tomen decisiones imparciales y no discriminatorias. Los sesgos en los sistemas de Inteligencia Artificial emergen por la \textbf{replicación y amplificación de los sesgos presentes en los datos de entrenamiento}. Por consiguiente, es fundamental estudiar exhaustivamente estos sesgos y desarrollar métodos computacionales dentro del dominio del Procesamiento del Lenguaje Natural (NLP) que puedan medir eficaz y confiablemente los sesgos de los textos usados para entrenar estos algoritmos. 
+
+Además, la medición de sesgos mediante técnicas computacionales es de gran importancia en las \textbf{ciencias sociales computacionales} porque permite analizar cómo se representan los distintos grupos sociales en productos culturales como libros, películas, revistas, diarios y redes sociales. Un estudio riguroso de los métodos de cuantificación de sesgos en textos es fundamental para entender la reproducción de estereotipos relacionados con el género, la nacionalidad y otras características.
+
+La medición de los sesgos en los textos, entendida como \textbf{una tarea diferente a la medición de los sesgos de los modelos de aprendizaje automático}, tiene su propia importancia. Mientras que una parte importante de las investigaciones anteriores se han centrado predominantemente en medir los sesgos de los modelos (\citealp{bolukbasi2016man,kiritchenko2018examining,zhao2018gender,bordia2019identifying,gonen2019lipstick,lu2020gender,blodgett2020language}, por mencionar algunos ejemplos ampliamente citados), es esencial comprender y cuantificar los sesgos inherentes a los propios textos. Esta tesis pretende proporcionar una herramienta analítica fiable para abordar esta tarea, la cual es especialmente valiosa para los estudios de ciencias sociales computacionales. 
+
+En este campo, \textbf{se ha vuelto extendido el uso de \emph{word embeddings} para medir sesgos y estereotipos sociales en \emph{corpora}}. Los \emph{embeddings}, representaciones de palabras como vectores densos, capturan asociaciones semánticas entre palabras basadas en sus patrones de coocurrencia en el \emph{corpus}. Aunque han demostrado ser útiles para detectar una amplia variedad de sesgos, las métricas basadas en \emph{embeddings} carecen de transparencia e interpretabilidad. Cuando se usan \emph{embeddings} para medir sesgos, es difícil determinar si los resultados se deben a asociaciones de primer orden generalizadas o si se derivan de asociaciones de orden superior poco claras. Esta falta de interpretabilidad dificulta la comprensión de los aspectos específicos del \emph{corpus} que contribuyen a las mediciones de sesgo. Además, las métricas existentes basadas en \emph{embeddings} no proporcionan un medio eficiente y confiable de estimar los intervalos de confianza o la significación estadística.
+
+% que suelen realizarse utilizando incrustaciones estáticas de palabras. Pretendemos ir más allá de las métricas basadas en la incrustación de palabras, que carecen de transparencia, interpretabilidad y explicabilidad. Nuestra métrica alternativa, basada en la información mutua puntual (PMI), ofrece una interpretación sencilla en términos de coocurrencias de palabras y permite estimar intervalos de confianza y significación estadística.
+
+Para abordar estas limitaciones, \textbf{presentamos una métrica alternativa basada en \emph{Pointwise Mutual Information} (PMI) para medir sesgos en textos}. PMI es una medida de asociación de primer orden entre dos palabras que compara sus probabilidades de ocurrencia individuales con su probabilidad de coocurrencia. La métrica basada en PMI tiene una interpretación transparente y ofrece la posibilidad de estimar intervalos de confianza y evaluar la significación estadística de manera confiable. Esto permite a los investigadores comprender mejor las relaciones semánticas específicas que dan lugar a las estimaciones de sesgo, así como también obtener conclusiones más sólidas acerca de la presencia y la magnitud de los sesgos en los textos.
+
+Los \textbf{objetivos de esta tesis} son dos. En primer lugar, buscamos analizar la métrica basada en PMI para medir sesgos en textos, estudiando sus propiedades estadísticas y sus ventajas de interpretabilidad, que hasta ahora se habían pasado por alto. En segundo lugar, nos proponemos evaluar las diferencias, ventajas y desventajas del método basado en PMI frente a las técnicas existentes basadas en \emph{embeddings}. Para ello, realizamos un conjunto de experimentos en la Wikipedia en inglés que apuntan a comparar ambas métricas en tres dimensiones: estimación de la variabilidad, correlación con el juicio humano e interpretabilidad. 
+
+
+La organización de esta tesis es la siguiente. El \textbf{capítulo \ref{cap:sesgo_textos}} hace una revisión de la literatura sobre la medición de sesgos en textos con herramientas de NLP, enfocándose predominantemente en las métricas basadas en \emph{word embeddings}. Describimos los métodos más difundidos para entrenar \emph{embeddings} y las métricas típicamente usadas para medir sesgos con éstos. El \textbf{capítulo \ref{cap:bias_pmi}} presenta los fundamentos teóricos de la métrica de medición de sesgos basada en PMI, explicando su interpretación en términos de coocurrencias. También presenta la estimación de los intervalos de confianza y la significación estadística dentro de este marco. En el \textbf{capítulo \ref{cap:experimentos}} realizamos experimentos orientados a ilustrar las propiedades de la métrica basada en PMI en términos de estimación de la variabilidad, correlación con el juicio humano e interpretabilidad. Describimos la configuración experimental, los conjuntos de datos usados, y las metodologías de evaluación empleadas, y luego presentamos los resultados. Finalmente, el \textbf{capítulo \ref{cap:conclusiones}} concluye la tesis, resumiendo las contribuciones y discutiendo las implicaciones de nuestros hallazgos.
+ 
+El código utilizado en esta tesis está disponible en \url{https://github.com/ftvalentini/tesis-SesgoPMI} para su uso y exploración.
+
+% ----------------------------------------------------------------------------
+
+

@@ -1,0 +1,158 @@
+
+\chapter{Medición de sesgos textuales} \label{cap:sesgo_textos}
+
+A los fines de este trabajo, definimos el \textbf{sesgo textual} como el grado en que el lenguaje usado para describir grupos o cosas es diferente \citep{hoyle2019unsupervised}. Algunos de estos sesgos pueden ser moralmente neutrales, como por ejemplo, el sesgo según el cual los insectos son relativamente desagradables, mientras que las flores son agradables. En cambio, los sesgos derivados de aspectos de la cultura humana que pueden conducir a comportamientos dañinos, como los sesgos de género o de nacionalidad, pueden ser problemáticos y llevan el nombre de sesgos estereotipados o directamente \textbf{estereotipos} \citep{caliskan2017semantics}. 
+
+Típicamente, la literatura sobre sesgos en el NLP se centra en el estudio de estereotipos porque su reproducción es potencialmente perjudicial para la sociedad. La metodología más usada para medir sesgos textuales son las métricas basadas en \emph{word embeddings} estáticos, los cuales describimos a continuación.
+
+
+\section{\emph{Word embeddings} estáticos} \label{sec:embeddings}
+
+% [qué son los WE estáticos]
+Los \emph{embeddings} son \textbf{representaciones vectoriales densas} de las palabras de un corpus que tienen dimensión relativamente baja (usualmente entre 50 y 1000 dimensiones). Los \emph{embeddings} que usamos en este trabajo y que se usan típicamente para medir sesgos textuales son estáticos. Esto significa que cada palabra del vocabulario se representa con un \textbf{único vector fijo}, diferenciándose de las representaciones contextualizadas que se desarrollaron posteriormente, donde las palabras tienen \emph{embeddings} distintos según el contexto en el que se encuentran (por ejemplo, los \emph{embeddings} BERT de \citealp{devlin2019bert}). 
+
+Los espacios vectoriales de los \emph{embeddings} estáticos se generan a partir de la distribución de las palabras en el \emph{corpus}, bajo la hipótesis de que las palabras que aparecen en contextos similares suelen tener un contenido semántico similar. Con esta metodología, el significado de las palabras intenta aprenderse a partir de sus \textbf{coocurrencias}, es decir, de la frecuencia de palabras que aparecen en su contexto cercano. Durante el proceso de aprendizaje de los vectores, se busca que los vectores de palabras semánticamente asociadas estén relativamente cerca en el espacio vectorial, y los de palabras no asociadas, relativamente lejos. 
+
+A continuación describimos los tres métodos de generación de \emph{word embeddings} que usamos en este trabajo.
+
+\subsection{\emph{Skip-gram with negative sampling} (SGNS)} \label{sec:sgns}
+
+%[qué es SGNS]
+La metodología de \emph{Skip-gram with negative sampling} (SGNS) \citep{mikolov2013distributed} representa a cada palabra del vocabulario con dos vectores de igual dimensión: un \textbf{vector objetivo $v_w$} y un \textbf{vector de contexto $v_c$}. Los parámetros que se buscan aprender son entonces dos matrices, $W$ y $C$, cada una de las cuales contiene en cada fila el \emph{embedding} o vector de cada una de las palabras del vocabulario. 
+
+Estos parámetros se ajustan para optimizar una función de pérdida donde los pares de palabras que efectivamente coocurren en el corpus se toman como ejemplos positivos, mientras que como ejemplos negativos se toman muestras aleatorias del vocabulario, llamadas \textbf{muestras negativas}.
+
+Más específicamente, los ejemplos positivos son los pares de palabras $(w,c)$ que surgen de considerar una ventana de tamaño $2\,T$ alrededor de cada palabra $w$, donde $w$ es la palabra central, $T$ es el tamaño de la ventana, y las palabras en la ventana son las palabras de contexto $c$. Por cada ejemplo positivo $(w,c)$ se muestrean $k$ palabras usando la distribución de probabilidad de de ocurrencia de cada palabra estimada con  
+%
+\begin{equation}
+    P_{\alpha}(i) = \frac{f(i)^{\alpha}}{\sum_{j \in V} f(j)^{\alpha}}
+\end{equation}
+%
+donde $f(i)$ es la cantidad de veces que una palabra $i$ coocurre con cualquier otra palabra en el corpus, $V$ es el vocabulario y $\alpha$ es un parámetro de suavizado. Estos $k$ ejemplos son los ejemplos negativos o \emph{palabras de ruido}. El parámetro $0 < \alpha < 1$ suaviza la distribución, incrementando la probabilidad de muestrear palabras con baja frecuencia porque $P_{\alpha}(i) > P(i)$ para palabras relativamente poco frecuentes. 
+
+% NOTE esto impacta directamente en el v_c de low freq words --> no es obvio que genere mejores representaciones de v_w para low freq words // la motivacion de que es util es un rdo mas bien empirico?
+
+Para entrenar los parámetros $W$ y $C$, para cada ejemplo positivo $(w,c)$ junto con sus $k$ ejemplos negativos se minimiza una \textbf{función de pérdida} definida como: 
+
+\begin{equation}
+    L(w,c) = -\log \sigma(v_c^T v_w) - \sum_{i=1}^k \log \sigma(-v_{n_i}^T v_w)
+\end{equation}
+
+$\sigma$ es la función sigmoidea, de modo que $\sigma(v_c^T v_w)$ modela la probabilidad de que la palabra $c$ sea una palabra de contexto real para la palabra objetivo $w$, mientras que la probabilidad de que una palabra $c$ no sea una palabra de contexto real para $w$ se modela como $\sigma(-v_{c}^T v_w)$. Entonces, la función de pérdida $L$ arroja valores bajos cuando la probabilidad asignada a que $c$ sea una palabra de contexto real para $w$ es alta, y cuando las probabilidades asignadas a que los ejemplos negativos $n_i$ sean palabras de contexto reales para $w$ son bajas.
+
+Esta función de pérdida se minimiza con \textbf{descenso por el gradiente} tomando como parámetros ajustables los vectores $v_w$ y $v_c$, almacenados en las matrices $W$ y $C$. Más específicamente, se usan los ejemplos positivos y negativos como datos de entrenamiento, se inicializan aleatoriamente $W$ y $C$, y se recorren los datos de entrenamiento aplicando descenso por el gradiente, ajustando los pesos de $W$ y $C$ de manera tal que la similitud $\sigma(v_c^T v_w)$ de los pares $(w, c)$ que efectivamente ocurren en el corpus tienda a maximizarse, a la vez que se minimice la similitud de los pares que no ocurren en el corpus (ejemplos negativos). 
+
+Como resultado, una vez alcanzado un número máximo de pasadas por el \emph{corpus}, las palabras que tienden a coocurrir en las ventanas de coocurrencia tienden a tener representaciones cercanas en el espacio vectorial, mientras que las palabras que aparecen en contextos diferentes tienden a representarse con vectores que están relativamente lejos.
+
+En las librerías más populares que implementan SGNS (como \texttt{gensim} de \citealp{rehurek2010gensim}, que usamos en este trabajo), se tiende a usar únicamente el vector $v_w$ como representación vectorial final de cada palabra, mientras que el vector $v_c$ se descarta.
+
+
+\subsection{FastText} \label{sec:fasttext}
+
+%[qué es FastText]
+Los \emph{embeddings} generados con SGNS sólo están definidos para palabras que son parte de $V$, el vocabulario de entrenamiento. Es decir, no es posible obtener \emph{embeddings} para palabras que no estén en el \emph{corpus} de entrenamiento (\textbf{palabras OOV}, \emph{out-of-vocabulary}) pero que puedan ser de interés, como las distintas formas o inflexiones asociadas a verbos y sustantivos.
+
+Para resolver esto, la metodología FastText \citep{bojanowski2017enriching} representa a cada palabra como sí misma más el conjunto de n-gramas o \textbf{subpalabras} que la constituyen. Para ello, se añaden símbolos especiales \texttt{<} y \texttt{>} al comienzo y final de la palabra antes de hacer la partición en subpalabras. Luego se aprenden vectores para cada subpalabra con la misma metodología de entrenamiento que SGNS. En general se consideran como subpalabras todos los n-gramas de entre 3 y 6 caracteres que componen a la palabra.
+
+Finalmente, para obtener el vector final de palabras OOV se calcula el promedio de los vectores de las subpalabras que la constituyen que existen en el vocabulario, mientras que para palabras que sí están en $V$ se incluye también en el promedio el vector de la palabra completa. Por ejemplo, si la palabra \emph{gato} está en el vocabulario, su vector final será el promedio de los vectores 
+de los 3-gramas \texttt{<ga}, \texttt{gat}, \texttt{ato}, \texttt{to>}, los 4-gramas \texttt{<gat}, \texttt{gato}, \texttt{ato>}, y los 5-gramas \texttt{<gato}, \texttt{gato>}, y el vector de la palabra completa \texttt{<gato>}. En el presente trabajo consideramos únicamente palabras que están en $V$.
+
+Al igual que en SGNS, se suelen considerar únicamente los vectores $v_w$, mientras que los vectores $v_c$ se descartan. 
+
+\subsection{GloVe} \label{sec:glove}
+
+% [qué es GloVe]
+En lugar de recorrer todos los pares de coocurrencias a la hora de aprender los \emph{embeddings}, la metodología GloVe (\emph{Global Vectors for Word Representation}, \citealp{pennington2014glove}) busca aprovechar los conteos globales almacenados en la \textbf{matriz de coocurrencias $M$}, la cual se precalcula antes de iniciar el entrenamiento. La misma almacena en cada celda $M_{ij}$ la cantidad de veces que la palabra $i$ aparece en el contexto de la palabra $j$ en el \emph{corpus} de entrenamiento al considerar una ventana de tamaño $2\,T$ alrededor de cada palabra.
+
+La función de pérdida GloVe para el \emph{corpus} en su conjunto viene dada por 
+%
+\begin{equation} \label{eq:glove_loss}
+    L = \sum_{i,j=1}^V f(M_{ij}) (v_{w_i}^T v_{c_j} + v_{b_w} + v_{b_c} - \log M_{ij})^2
+\end{equation}
+%
+donde $M_{ij}$ indica el número de veces que la palabra $j$ aparece en el contexto de la palabra $i$, $v_{w_i}$ es el vector objetivo de la palabra $i$, $v_{c_j}$ es el vector de contexto de la palabra $j$, y $v_{b_w}$ y $v_{b_c}$ son son escalares específicos para cada palabra que funcionan como interceptos. $f(M_{ij})$ es una función de ponderación de las coocurrencias que se define como
+%
+\begin{equation}
+    f(x) = \begin{cases}
+        \left(\frac{x}{x_{\text{max}}}\right)^\alpha & \text{si } x < x_{\text{max}} \\
+        1 & \text{si } x \geq x_{\text{max}}
+    \end{cases}
+\end{equation}
+%
+Con esta función se reduce el peso de las coocurrencias poco frecuentes (porque $f(x) < 1$ para $x < x_{\text{max}}$). \citet{pennington2014glove} usan $\alpha = 0.75$, lo cual incrementa ligeramente el peso de las coocurrencias más pequeñas (porque $f(x)_{\alpha=0.75} > f(x)_{\alpha=1}$ para $x < x_{\text{max}}$), de manera similar a como lo hace el parámetro de \emph{smoothing} $\alpha$ de SGNS. En este trabajo mantenemos este valor.
+% , a la vez que se evita que las coocurrencias más frecuentes dominen la función de pérdida (porque $f(x)=1$ para $x > x_{\text{max}}$).
+%donde $x_{\text{max}}$ es el máximo conteo de coocurrencias que se considera, y $\alpha$ es un parámetro que controla la ponderación de los conteos de coocurrencias. \citet{pennington2014glove} usan los valores de $x_{\text{max}} = 100$ y $\alpha = 0.75$, los cuales mantenemos en este trabajo. 
+
+La pérdida de la ecuación \ref{eq:glove_loss} se minimiza cuando $v_{w_i}^T v_{c_j} + v_{b_w} + v_{b_c} = \log M_{ij}$. Para optimizar la función se muestrean aleatoria e iterativamente tandas de elementos no nulos de la matriz $M$ para calcular los gradientes de los parámetros $v_{w_i}$, $v_{c_j}$, $v_{b_w}$ y $v_{b_c}$, y luego actualizarlos con el algoritmo AdaGrad \citep{duchi2011adaptive}. El entrenamiento finaliza cuando se alcanza un número máximo de pasadas completas por la matriz de coocurrencias.
+
+Al igual que SGNS y FastText, el modelo genera dos conjuntos de vectores de palabras, $W$ y $C$. Dado que $M$ es simétrica, $W$ y $C$ son conceptualmente equivalentes y sólo difieren por tener inicializaciones aleatorias distintas. Por lo tanto, por defecto, los \emph{embeddings} GloVe de una palabra $i$ se obtienen sumando los vectores objetivo y de contexto de la misma ($v_{w_i} + v_{c_i}$). 
+
+
+\section{Medición de sesgos con \emph{word embeddings}} \label{sec:bias_we}
+
+%[cómo medir sesgos con WE]
+Dado que miden la similitud semántica entre las palabras de un corpus, los \emph{word embeddings} son ampliamente utilizados para \textbf{cuantificar sesgos textuales de \emph{corpora} específicos}. La metodología consiste en entrenar \emph{embeddings} sobre el \emph{corpus} que se desea estudiar, y luego computar una \textbf{métrica de medición de sesgo textual}.
+
+En la versión más general, se conforman dos conjuntos de \textbf{palabras de contexto $A$ y $B$}, y un conjunto de \textbf{palabras objetivo $X$}. El sesgo textual de las palabras $X$ en relación a los atributos $A$ y $B$ en un \emph{corpus} dado se mide calculando la diferencia de similitudes entre $X$ con respecto a $A$ y $B$:
+
+\begin{equation} \label{eq:bias}
+    \text{Bias}(X,A,B) = \text{sim}(X,A) - \text{sim}(X,B)
+\end{equation}
+
+Las medidas de sesgo textual cuantifican, entonces, cuánto más se asocian las palabras de $X$ con las de $A$ que con las de $B$. La similitud semántica se puede cuantificar con la \textbf{similitud coseno} entre \emph{word embeddings} (WE), de manera que el sesgo para una palabra objetivo individual $x$ queda definida como:
+%
+\begin{equation} \label{eq:bias_we}
+    \BiasWE(x,A,B) =
+    \frac{1}{|A|} \sum_{a \in A} \text{cos}(v_x,v_a) -
+    \frac{1}{|B|} \sum_{b \in B} \text{cos}(v_x,v_b)
+\end{equation}
+%
+donde $v_i$ es el vector de la palabra $i$ y $\text{cos}(v_i,v_j)$ es la similitud coseno entre vectores \citep{lewis2020gender}.
+
+Por ejemplo, siguiendo a \citet{lewis2020gender}, para medir el $\BiasWE$ de género binario (femenino vs masculino) en un \emph{corpus} en inglés, los conjuntos $A$ y $B$ se pueden conformar con palabras que representan a los géneros femenino y masculino, respectivamente: $B = \{female,woman,she,...\}$ y $B = \{male,man,he,...\}$. Las palabras $x$, por su parte, son aquellas donde es de interés medir estereotipos, por ejemplo, ocupaciones como \emph{nurse}, \emph{doctor}, \emph{engineer}, etc. En el caso en que se desea medir el sesgo conjuntamente para un conjunto de palabras $X$, se toma el promedio de $\BiasWE$ a lo largo de las $x$ que conforman el conjunto. 
+
+%[antecedentes medicion de sesgo con WE]
+En la literatura que estudia sesgos lingüísticos, múltiples estudios han usado variantes de la ecuación \ref{eq:bias_we} para \textbf{analizar corpus específicos}. Por ejemplo, \citet{garg2018word} entrenaron \emph{embeddings} GloVe en el \emph{New York Times Annotated Corpus} para cuantificar los cambios en los estereotipos hacia las mujeres y las minorías étnicas en los Estados Unidos a lo largo del siglo XX. Para este análisis, usaron métricas basadas en la distancia euclidiana y la similitud coseno muy similares a la ecuación \ref{eq:bias_we}, y explicaron que ambas arrojaban resultados similares.
+
+\citet{kozlowski2019geometry}, por otro lado, entrenaron embeddings SGNS en libros digitalizados disponibles en Google Ngrams para examinar la evolución de los sesgos de etnia, género y clase a lo largo del tiempo. La métrica que utilizaron primero calcula la diferencia promedio entre los vectores de $N$ palabras de contexto apareadas (es decir, $d = \frac{1}{N} \sum_{i=1}^N v_{a_i}-v_{b_i}$), y luego toma la similitud coseno de esta dirección con el vector de la palabra objetivo, $v_x$ i.e. $\text{cos}(d,v_x)$.
+
+% es decir, $\frac{1}{N} \sum_{i=1}^N \text{cos}(v_{a_i},v_{b_i})$
+
+% NOTE Bolukbasi toma 10 pares ai-bi, calcula los 10 PCs, y se queda con el 1er PC como la dirección de genero ("g") -- luego hacer cos(x, g)
+
+\citet{lewis2020gender} midieron sesgos de género con la ecuación \ref{eq:bias_we} usando \emph{embeddings} FastText entrenados en Wikipedias y subtítulos de 25 idiomas. Descubrieron que los sesgos de género medidos en pruebas de asociaciones psicológicas implícitas están estrechamente relacionados con los sesgos de género textuales de la lengua que hablan los participantes de las pruebas.
+
+Otro estudio, el de \citet{charlesworth2021gender}, midió los estereotipos de género relacionados con las ocupaciones y los rasgos de personalidad con \emph{embeddings} FastText en \emph{corpora} de diversos dominios (por ejemplo, conversaciones de niños y adultos, libros, películas, televisión). Encontraron que los sesgos eran estables a pesar de las diferencias en los \emph{corpora}.
+
+Otro tipo de estudios han usado \textbf{\emph{embeddings} pre-entrenados sobre grandes volúmenes de texto, en lugar de entrenar desde cero} \emph{embeddings} sobre \emph{corpora} de interés. Esto les ha permitido estudiar los sesgos que podrían existir potencialmente en el \emph{corpus} de entrenamiento. 
+
+Uno de los trabajos más destacados de este tipo es el de \citet{caliskan2017semantics}, quienes midieron los sesgos de género en vectores GloVe pre-entrenados en el \emph{corpus} Common Crawl, obtenido de un barrido de la web a gran escala \citep{pennington2014glove}. Encontraron una correlación entre los sesgos de género de los \emph{embeddings} y la distribución del género en los nombres de personas y en las ocupaciones en Estados Unidos. Para realizar este análisis, utilizaron la métrica SC-WEAT (\emph{Single-Category Word Embedding Association Test}, \citealp{toney2021valnorm}), que agrega el desvío estándar de las similitudes de $v_x$ con respecto al conjunto de vectores de $A \cup B$ como denominador de la ecuación \ref{eq:bias_we}. Esta misma medida también se usó en el estudio de \citet{charlesworth2021gender}.
+
+%Caliskan et al. (2017). They use pretrained embeddings as “a tool to extract associations captured in text corpora” and find that “text corpora contain recoverable and accurate imprints of our historic biases”. 
+
+En otro estudio relevante, \citet{garg2018word} analizaron las tendencias de los estereotipos a lo largo de la historia utilizando los \emph{embeddings} HistWords pre-entrenados con \emph{Google Books} y el \emph{Corpus of Historical American English} \citep{hamilton2016diachronic}. De manera similar, \citet{jones2020stereotypical} utilizaron los HistWords para analizar la trayectoria en el tiempo de las asociaciones estereotipadas de género en la lengua inglesa escrita desde el 1800 hasta el 2000. Para medir los sesgos, usaron una métrica parecida a la ecuación \ref{eq:bias_we}, pero adaptada a múltiples palabras objetivo: la similitud entre $X$ y las palabras de contexto, por ejemplo $\text{sim}(X,A)$, se computa tomando el promedio de las similitudes de todas las combinaciones posibles de pares $(x_i,a_i)$, donde $x_i \in X$ y $a_i \in A$.
+
+Por otro lado, \citet{defranza2020language} usaron \emph{embeddings} FastText pre-entrenados en las Wikipedias y Common Crawls de 45 idiomas distintos para analizar los pensamientos voluntarios de las personas expresados en los textos de cada idioma. La métrica que usaron para medir sesgos textuales es similar a la de la ecuación \ref{eq:bias_we}, pero adaptada al caso en que se cuenta con dos grupos de palabras objetivo. Esto es útil en los idiomas en los que las palabras tienen género gramatical. Sus resultados mostraron que los sesgos textuales de género son más frecuentes en las lenguas con género gramatical que en las que no lo tienen.
+
+% TODO Lenton et al., 2009 TODO contar?; 
+% TODO Kulkarni et al., 2015 TODO contar?; 
+
+En el presente trabajo usamos la especificacion de la ecuación \ref{eq:bias_we} por su flexibilidad: no requiere palabras de contexto apareadas, admite grupos de contexto de distinta longitud y puede calcularse si los grupos de contexto están conformados por una sola palabra cada uno (esto último no es posible en una métrica como el SC-WEAT). Además, no precisamos extenderla para el caso de palabras con género gramatical porque trabajamos con el idioma inglés, en el que las palabras no tienen género gramatical.
+
+\subsection{Estimación de la variabilidad de métricas basadas en \emph{word embeddings}} \label{sec:bias_we_variabilidad}
+
+%[IC / pvalue de sesgos con WE]
+
+Las métricas basadas en \emph{embeddings} admiten el uso de técnicas de remuestreo para estimar la variabilidad del estadístico específico que se esté calculando. Esto permite evaluar la robustez de los resultados obtenidos. 
+
+
+Por una parte, la literatura ha usado \textbf{tests de permutaciones para calcular la significancia estadística} de $\text{Bias}_{\text{WE}}$ o métricas similares \citep{caliskan2017semantics,charlesworth2021gender}. Los tests de permutaciones consisten en asignar aleatoriamente las palabras de contexto entre entre los grupos $A$ y $B$ en múltiples iteraciones y calcular la métrica de sesgo en cada iteración. Con los valores del sesgo de cada iteración se construye la distribución nula del sesgo, y se calcula el p-valor a dos colas como la fracción de veces que el valor absoluto del sesgo de la distribución nula es igual o mayor que el observado \citep{north2002note}.
+
+Por otro lado, se ha usado \textbf{bootstrap para obtener intervalos de confianza} con un enfoque de remuestreo parecido a los tests de permutaciones \citep{garg2018word}. En este caso, en cada iteración de bootstrap se muestrean las palabras de contexto $A$ y $B$ por separado con reemplazo y se calcula la métrica de sesgo. Con los valores del sesgo de cada iteración se construye la distribución de bootstrap del sesgo. El error estándar del sesgo se estima luego como la desviación estándar de la distribución de bootstrap, y los cuantiles de la distribución se utilizan para obtener intervalos de confianza \citep{davison1997bootstrap}.
+
+Destacamos que, en rigor, los intervalos de confianza computados por \citet{garg2018word} hacen bootstrap sobre las palabras objetivo y estiman entonces la variabilidad del sesgo cuando se computa para muchas palabras objetivo en simultáneo. Sin embargo, este enfoque se puede extender a las palabras de contexto cuando se computa el sesgo de una sola palabra objetivo, como en nuestro caso.
+
+Otro enfoque, propuesto por \citet{kozlowski2019geometry}, consiste en estimar la variabilidad del sesgo que se origina en la variabilidad propia de los \emph{embeddings}. El método consiste en entrenar múltiples conjuntos de \emph{embeddings} sobre subconjuntos del \emph{corpus} (e.g. 20) y estimar el desvío estándar e intervalo de confianza en base a estas realizaciones. Si bien consideramos que este enfoque es válido, no lo implementamos por ser computacionalmente costoso para \emph{corpora} relativamente grandes, como el que usamos en esta tesis.
+
+% TODO borrar esto:?
+En resumen, la estimación de la variabilidad de las métricas sesgo textual es fundamental para evaluar la robustez de los resultados obtenidos. Los métodos de remuestreo, como los tests de permutaciones y el bootstrap, son las herramientas típicamente usadas para lograr este objetivo en el caso de métricas basadas en \emph{word embeddings}.

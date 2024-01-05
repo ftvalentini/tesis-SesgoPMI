@@ -1,0 +1,128 @@
+
+% Inspirado en:
+%   https://es.overleaf.com/latex/templates/tesis-universidad-de-murcia-umu-eidum/pspmjbxvpfff
+% Notas: 
+%   - "estilos": variables.tex donde poner titulo, autor, etc... y otros de librerías etc...
+%   - "capitulos": capitulos
+%   - "capitulos/tablas": tablas
+%   - "img": imagenes
+
+\documentclass[a4paper,12pt,oneside]{book}
+\input{./estilos/estilo-basico.tex} 
+\input{./estilos/estilo-capitulos.tex}
+\input{estilos/variables}
+
+\begin{document}
+
+\frontmatter % start roman page numbering
+
+% PORTADA
+\pagestyle{empty} % No page number here
+\input{capitulos/portada.tex}
+% \newpage 
+% \ % pagina en blanco
+% \newpage
+
+% % CONTRAPORTADA con nombres de directoras
+% \input{capitulos/portada-interior.tex}
+%\newpage
+
+% % AGRADECIMIENTOS
+% \chapter*{Agradecimientos}
+% %\markboth{AGRADECIMIENTOS23}{AGRADECIMIENTOS} % encabezado 
+% \input{./capitulos/agradecimientos.tex}
+
+% PREFACIO
+\input{./capitulos/prefacio.tex}
+
+% RESUMEN
+\input{./capitulos/resumen.tex}
+
+%-------------------------------------------------------------------
+% TABLA DE CONTENIDOS
+%-------------------------------------------------------------------
+
+%\setcounter{tocdepth}{1}
+%level -1: part, 0: chapter, 1: section, etc.
+\renewcommand{\baselinestretch}{0.1}\normalsize
+\tableofcontents
+\renewcommand{\baselinestretch}{0.3}\normalsize
+\listoffigures
+\renewcommand{\baselinestretch}{0.3}\normalsize
+\listoftables
+\renewcommand{\baselinestretch}{1.2}\normalsize
+
+
+%-------------------------------------------------------------------
+%	TESIS
+%-------------------------------------------------------------------
+
+\mainmatter % start arabic page numbering
+\pagestyle{headings}
+
+% \def\tablename{Tabla}% para que denomine tabla a las tablas y no "cuadro"
+%\doublespacing
+\onehalfspace
+%\singlespace
+%\spacing{1.5}	
+\setlength{\parskip}{3mm} % separación entre párrafo
+\setlength{\parindent}{1cm} % indentación primera linea de párrafo
+
+\input{./capitulos/10-intro.tex}
+\input{./capitulos/20-antecedentes.tex}
+\input{./capitulos/30-bias_pmi.tex}
+\input{./capitulos/40-experimentos.tex}
+\input{./capitulos/50-conclusiones.tex}
+
+% \chapter{Aproximación de BiasPMI como log odds ratio} \label{cap:aproximacion_bias_pmi}
+% \input{./capitulos/40-aproximacion.tex}
+% \chapter{Comparación con métricas basadas en embeddings} \label{cap:comparacion_embeddings}
+
+%	BIBLIOGRAFÍA
+%\backmatter
+%\nocite{*}   %incluye en todas las entradas del .bib, incluso las no citadas
+\bibliographystyle{apalike-es}
+\bibliography{ref.bib}
+% \printbibliography
+
+
+% % FV NOTE:
+% intente poner esto en apalike-es.bst para tener URLs pero no funca:
+
+% FUNCTION {format.url}
+% { url empty$
+%     { "" }
+%     { new.block "URL: \href{" url * "}{" * swap$ * "}" * }
+%   if$
+% }
+
+
+
+
+% %-------------------------------------------------------------------
+% %	APÉNDICES
+% %-------------------------------------------------------------------
+
+% \addtocontents{toc}{\vspace{2em}} % Agrega espacios en la toc
+% \appendix % Los siguientes capítulos son apéndices
+
+% \chapter{Esto será un apéndice}\label{Apendice_A}
+% \input{./capitulos/110-apendice.tex}
+
+% \chapter{Esto será otro apéndice}\label{Apendice_B}
+% \input{./capitulos/120-apendice.tex}
+
+% \chapter{Esto será otro apéndice que es un PDF}\label{Apendice_C}
+% \includepdf[pages=-,templatesize={120mm}{175mm},noautoscale=false]{./capitulos/otrosDocs/documento-pdf-de-ejemplo.pdf}
+
+% \chapter{Esto será otro apéndice que es un PDF}\label{Apendice_C}
+% \includepdf[pages=-,templatesize={120mm}{175mm},noautoscale=false]{./capitulos/otrosDocs/codigo.pdf}
+
+% \newpage %añado una página adicional blanca
+% \thispagestyle{empty} % empty
+% \mbox{}
+
+\addtocontents{toc}{\vspace{2em}} % Agrega espacio en la toc
+
+\end{document}
+

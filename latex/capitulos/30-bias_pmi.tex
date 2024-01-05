@@ -1,0 +1,176 @@
+
+\chapter{Medición de sesgos con PMI} \label{cap:bias_pmi}
+
+% TODO sacar cosas de esta intro que esten en otros lados:
+Hemos mostrado que los enfoques basados en \emph{embeddings} estáticos se han usado ampliamente para detectar y cuantificar sesgos en \emph{corpora}. Estos vectores pueden usarse para medir la similitud semántica entre palabras y, por lo tanto, detectar patrones de sesgo en el uso de ciertas palabras. Si bien los \emph{embeddings} son una herramienta poderosa para medir similitud, y por lo tanto, sesgos, no son la única. El \textbf{Pointwise Mutual Information (PMI)} es una medida que también puede usarse para medir la similitud semántica entre palabras. 
+
+A continuación, describiremos la medida de PMI y presentaremos una métrica para cuantificar sesgos textuales basado en esta medida. Como veremos en los capitulos subsiguientes, la introducción de esta métrica se justifica por su mayor transparencia e interpretabilidad.
+% TODO agregar lo de variabilidad si queda en este capitulo
+
+\section{Antecedentes} \label{sec:pmi_intro}
+
+%[qué es PMI]
+
+El PMI entre dos palabras $x$ y $y$ se define como
+%
+\begin{equation} \label{eq:pmi}
+    \PMI(x,y) = \log \frac{p(x,y)}{p(x)p(y)} 
+\end{equation}
+%
+donde $p(x,y)$ es la probabilidad de coocurrencia de las palabras $x$ y $y$ en una ventana de $2\,T$ palabras en un \emph{corpus}, y $p(x)$ y $p(y)$ representan las probabilidades de ocurrencia individuales de las palabras $x$ e $y$ en cualquier contexto en el mismo \emph{corpus} \citep{church1990word}.
+
+El PMI compara la probabilidad de ocurrencia conjunta de dos palabras con su probabilidad de ocurrencia independiente. Específicamente, el PMI nos indica, en una escala logarítmica, cuántas veces más probable es que dos palabras aparezcan juntas en un \emph{corpus} (numerador de la ecuación \ref{eq:pmi}) en comparación con lo que se esperaría por azar (denominador).  
+
+Por este motivo, el PMI es una medida de \textbf{asociación de primer orden} entre dos palabras: dos palabras tienen una asociación de primer orden (también llamada asociación sintagmática) si están típicamente cerca una de la otra \citep{jurafsky2000speech}. Cuánto más alto es el PMI, más probable es que dos palabras coocurran en un \emph{corpus} en relación a lo que se esperaría si fueran independientes.
+
+Las probabilidades de la ecuación \ref{eq:pmi} pueden estimarse por máxima verosimilitud usando los conteos de una \textbf{matriz de coocurrencias} simétrica $M$ donde cada entrada indica el número de veces que una palabra aparece en el contexto de otra (en ventanas de $2\,T$ palabras). En particular:
+%TODO ojaldre que no da igual p(x) o p(y) (si se usa alpha por ej)
+%
+\begin{equation} \label{eq:pmi_probas}
+    \hat{p}(x,y) = \frac{M_{xy}}{N} \qquad
+    \hat{p}(x) = \frac{M_{x\cdot}}{N} \qquad
+    \hat{p}(y) = \frac{M_{\cdot y}}{N}
+\end{equation}
+%
+donde $N = \sum_{x} \sum_{y} M_{xy}$ es el número total de coocurrencias en el \emph{corpus}, $M_{xy}$ es el número de veces que la palabra $x$ aparece en el contexto de la palabra $y$, $M_{x\cdot} = \sum_y M_{xy}$ es el número de veces que la palabra $x$ aparece en cualquier contexto, y $M_{\cdot y} = \sum_x M_{xy}$ es el número de veces que la palabra $y$ aparece en cualquier contexto. 
+
+Estimamos el PMI entonces con
+%
+\begin{equation} \label{eq:pmi_estimado}
+    \PMI(x,y)
+        = \log \frac{\hat{p}(x,y)}{\hat{p}(x)\hat{p}(y)}
+        = \log \frac{M_{xy} \cdot N}{M_{x\cdot} \cdot M_{\cdot y}}
+\end{equation}
+
+El PMI también puede usarse para calcular asociaciones entre listas de palabras $X$ y $Y$. En este caso, $p(X,Y)$ es la probabilidad de coocurrencia entre cualquier palabra de $X$ con cualquier otra de $Y$. Del mismo modo, $p(X)$ y $p(Y)$ son la probabilidad de aparición de cualquier palabra de $X$ y cualquier palabra de $Y$, respectivamente. Para estimar las probabilidades, debemos sumar las coocurrencias de las palabras individuales i.e. $M_{XY} = \sum_{x \in X} \sum_{y \in Y} M_{xy}$, $M_{X\cdot} = \sum_{x \in X} M_{x\cdot}$ y $M_{\cdot Y} = \sum_{y \in Y} M_{\cdot y}$.
+% TODO explicar mejor esto?
+
+Una manera útil de reexpresar el PMI es:
+%
+\begin{equation} \label{eq:pmi_condicional}
+    \PMI(x,y)
+        = \log \frac{p(x,y)}{p(x)p(y)}
+        = \log \frac{p(x|y)p(y)}{p(x)p(y)}
+        = \log \frac{p(x|y)}{p(x)}
+        = \log \frac{p(y|x)}{p(y)}
+\end{equation}
+%
+siguiendo la definición de probabilidad conjunta $p(x,y) = p(x|y)p(y) = p(y|x)p(x)$. 
+
+En la ecuación \ref{eq:pmi_condicional}, $p(x|y)$ es la probabilidad de que la palabra $x$ aparezca en el contexto de la palabra $y$. Podemos interpretar el PMI, entonces, como la relación entre la probabilidad de que $x$ aparezca en el contexto de $y$ y la probabilidad de que $x$ aparezca en cualquier contexto, o bien, entre la probabilidad de que $y$ aparezca en el contexto de $x$ y la probabilidad de que $y$ aparezca en cualquier contexto.
+
+Por poner un ejemplo, si definimos \emph{X = \{hoja\}} y \emph{Y = \{árbol\}} y obtenemos un valor de PMI de 0.2, esto significa que la probabilidad de que la palabra \emph{hoja} aparezca en el contexto de la palabra \emph{árbol} es $\exp(0.2) \approx 1.22$ veces la probabilidad de que aparezca en cualquier contexto; es decir, es un 22\% más probable. En cambio, si el PMI fuera 0, sería igual de probable que \emph{hoja} aparezca en el contexto de \emph{árbol} que en cualquier contexto.
+
+En el ámbito del estudio de sesgos textuales, se ha usado la medida de PMI, aunque con menor popularidad que los \emph{word embeddings}. Un ejemplo de su aplicación es el estudio llevado a cabo por \citet{galvez2018half}, quienes analizaron la presencia de estereotipos de género en los subtítulos de películas en inglés. En este trabajo se usó la medida de PMI para medir la asociación la asociación de palabras asociadas a los géneros femenino ($A$) y masculino ($B$) con palabras asociadas a la inteligencia ($X$). En resumidas cuentas, descubrieron que $\PMI(A,X)$ tendía a ser menor que $\PMI(B,X)$, lo cual indicaría que el estereotipo que asocia la inteligencia con la masculinidad está presente en las películas occidentales.
+
+Insipirada en este enfoque, la métrica que presentamos a continuación se construye a partir de dos medidas de PMI, y tiene ventajas que desarrollaremos en las secciones subsiguientes.
+
+\section{Métrica de sesgo basada en PMI} \label{sec:bias_pmi}
+
+%[cómo medir sesgos con PMI]
+
+La métrica que proponemos surge de tomar la expresión genérica de sesgo de la ecuación \ref{eq:bias} y usar el PMI como medida de similitud entre palabras, lo que da lugar a la expresión:
+
+\begin{equation}\label{eq:bias_pmi}
+    \BiasPMI(X,A,B) = \PMI(X,A) - \PMI(X,B)
+\end{equation}
+
+Usando la reexpresión de la ecuación \ref{eq:pmi_condicional}, y considerando el caso de una sola palabra objetivo $x$, podemos reescribir la ecuación \ref{eq:bias_pmi} como:
+
+\begin{equation}\label{eq:bias_pmi_condicional}
+    \BiasPMI(x,A,B)
+        = \log \frac{p(x|A)}{p(x)} - \log \frac{p(x|B)}{p(x)}
+        = \log \frac{p(x|A)}{p(x|B)}
+\end{equation}
+
+Es decir, $\BiasPMI$ indica, en escala logarítmica, \textbf{cuánto más probable es encontrar la palabra $x$ en el contexto de las palabras $A$ que en el contexto de las palabras $B$}. Al igual que el PMI, este cociente de probabilidades condicionales puede estimarse por máxima verosimilitud con los conteos de coocurrencias del \emph{corpus} almacenados en la matriz $M$, 
+%
+\begin{equation} \label{eq:bias_pmi_estimado}
+    \BiasPMI(x,A,B)
+    = \log \frac{\hat{p}(x|A)}{\hat{p}(x|B)}
+    = \log \frac{\frac{M_{x,A}}{M_{\cdot A}}}{\frac{M_{x,B}}{M_{\cdot B}}}
+    = \log \frac{
+        \frac{M_{x,A}}{M_{x,A} + M_{\bar{x},A}}}{
+        \frac{M_{x,B}}{M_{x,B} + M_{\bar{x},B}}}
+\end{equation}
+%
+recordando que $M_{\cdot A} = \sum_{a \in A} M_{\cdot a}$ y sabiendo que $\hat{p}(x|A) = 
+\frac{\hat{p}(x,A)}{\hat{p}(A)} = 
+\frac{M_{x,A}}{M_{\cdot A}}$, y análogamente para $\hat{p}(x|B)$.
+
+% TODO aclarar que nos concentramos en x sola porque:
+% BiasPMI is flexible enough to be computed for a bag of target words as a whole, e.g. C = {nurse, nurses, nursing, …}; however in our experiments the size of C is 1 by construction.
+
+En la ecuación \ref{eq:bias_pmi_estimado} $M_{x,A}$ y $M_{x,B}$ representan el número de veces que la palabra $x$ aparece en el contexto de las palabras en $A$ y $B$, respectivamente, y $M_{\bar{x},A}$ y $M_{\bar{x},B}$ representan la cantidad de veces que todas las palabras menos $x$ aparecen en el contexto de las palabras en $A$ y $B$, respectivamente. La tabla de contingencia \ref{tab:contingency} representa estos conteos.
+
+\input{capitulos/tablas/contingency.tex}
+
+Cuando no hay coocurrencias entre la palabra objetivo $x$ y cualquiera de las palabras de contexto ($M_{x,A}=0$ o $M_{x,B}=0$), la métrica $\BiasPMI$ no está definida. En estos casos, se puede usar la versión suavizada de la métrica, que consiste en sumar previamente un pequeño valor $\epsilon$ a todas las coocurrencias \citep{jurafsky2000speech}. 
+
+La expresión de las ecuaciones \ref{eq:bias_pmi} y \ref{eq:bias_pmi_condicional} tiene \textbf{antecedentes en la literatura}. En primer lugar, \citet{turney2002thumbs} propuso una medida de \emph{Semantic Orientation} (SO) para bigramas, que es equivalente a la métrica $\BiasPMI$ presentada de la ecuación \ref{eq:bias_pmi}. La SO de un bigrama $x$ se define como la diferencia entre el PMI de $x$ con la palabra \emph{excellent} y el PMI de $x$ con la palabra \emph{poor}. En este caso, los PMI se computan a partir de la cantidad de resultados que devuelve un motor de búsqueda al buscar el bigrama $x$ y las palabras \emph{excellent} o \emph{poor}. El autor propone usar el SO para clasificar reseñas de productos como positivas o negativas. 
+
+Por otro lado, \citet{bordia2019identifying} utilizaron una expresión matemática para cuantificar sesgos de género que es equivalente a $\BiasPMI$. Este puntaje de sesgo se calcula para cada palabra de un \emph{corpus}. En el estudio, los autores toman el promedio de los puntajes a lo largo de las palabras de un \emph{corpus} de entrenamiento de modelos de lenguaje y de \emph{corpora} generados por estos modelos, con el objetivo de evaluar la eficacia de distintas metodologías para reducir el sesgo de género en modelos de lenguaje. 
+
+Por último, $\BiasPMI$ también es equivalente al $\text{PMI}_{gap}$ propuesto por \citet{aka2021measuring}. En este estudio se usó esta métrica en un contexto más general que el NLP, específicamente, para medir los sesgos que un modelo de aprendizaje automático puede haber aprendido en relación con diferentes etiquetas en un problema de clasificación supervisada.
+
+Si bien el PMI se ha usado para estudiar sesgos y patrones de orientación semántica de las palabras, acá proponemos usar la diferencia de PMIs como métrica para medir sesgos específicamente en el contexto de las ciencias sociales computacionales. Además, estudiamos por primera vez las propiedades estadísticas de esta métrica, lo cual presentamos en la siguiente sección.
+
+\section{Estimación de la variabilidad del sesgo basado en PMI} \label{sec:bias_pmi_variabilidad}
+
+%[cómo hacer inferencia con biasPMI]
+
+En las aplicaciones que son de interés en este trabajo, los grupos de palabras de contexto $A$ y $B$ están conformados típicamente por palabras que aluden a grupos sociales, como $\{he,man,she,woman,...\}$ en el caso del género, mientras que $X$ refiere a palabras específicas donde interesa medir un sesgo (en general trabajaremos con $|X|=1$, y entonces $X=x$). 
+
+Considerando esto, $M_{\bar{x},C}$ i.e. las coocurrencias entre palabras que no están en un grupo $C$ (la mayor parte del vocabulario) y una palabra específica $x$ son considerablemente mayores que $M_{x,C}$ i.e. las coocurrencias entre $x$ y las palabras de $C$. Más precisamente:
+%
+\begin{equation} \label{eq:cooc_approximation}
+    M_{\bar{x},A} \gg M_{x,A} \quad 
+    \text{y} \quad 
+    M_{\bar{x},B} \gg M_{x,B}
+\end{equation}
+
+Por ejemplo, si \emph{A = \{ping\}} y \emph{X = \{pong\}}, $\bar{X}$ representa el resto de palabras del vocabulario que no son \emph{pong}. La aproximación \ref{eq:cooc_approximation} dice que \emph{ping} coocurre considerablemente menos con \emph{pong} que con el resto de palabras del vocabulario. Aunque es probable que \emph{ping} y \emph{pong} tengan muchas coocurrencias, \emph{ping} coocurrirá más con el resto de palabras del vocabulario dentro de una ventana móvil de palabras. 
+
+Cuando se cumple la condición de la ecuación \ref{eq:cooc_approximation}, la ecuación \ref{eq:bias_pmi_estimado} puede aproximarse mediante
+%
+\begin{equation} \label{eq:bias_pmi_estimado_logodds}
+\BiasPMI
+    = \log \frac{
+        \frac{M_{x,A}}{M_{x,A} + M_{\bar{x},A}}}{
+        \frac{M_{x,B}}{M_{x,B} + M_{\bar{x},B}}}
+    \approx \log \frac{
+        \frac{M_{x,A}}{M_{\bar{x},A}}}{
+        \frac{M_{x,B}}{M_{\bar{x},B}}}
+    \approx \log \text{OR}
+\end{equation}
+
+Es decir, \textbf{$\BiasPMI$ se puede aproximar como un log odds ratio} (OR).
+
+La distribución del log odds ratio converge a la normalidad \citep{agresti2003categorical}. Por ende es sencillo evaluar la hipótesis nula de que el log odds ratio es 0 (ausencia de sesgo) mediante una \textbf{prueba paramétrica}. En particular, obtenemos el p-valor a dos colas con $2 P(\text{Z} < -|\BiasPMI|/SE)$, donde $Z$ es una variable aleatoria normal estándar, y el desvío estándar $SE$ se estima mediante
+%
+\begin{equation} \label{eq:logodds_se}
+    SE = \sqrt{
+        \frac{1}{M_{x,A}}
+        + \frac{1}{M_{x,B}}
+        + \frac{1}{M_{\bar{x},A}}
+        + \frac{1}{M_{\bar{x},B}}
+    }
+\end{equation}
+
+A su vez, el intervalo de confianza del 95\% viene dado por
+%
+\begin{equation}
+    CI_{95\%}(\BiasPMI) 
+        = 
+        \BiasPMI \pm 1.96 \, SE
+\end{equation}
+
+Los p-valores e intervalos de confianza de $\BiasPMI$ se basan en estimar una variabilidad que es fundamentalmente distinta a la que se estima con las permutaciones o bootstrap de $\BiasWE$ presentados en la sección \ref{sec:bias_we_variabilidad}. 
+
+En particular, la incertidumbre asociada a $\BiasPMI$ medida por medio del test de log odds ratio captura \textbf{la variabilidad del proceso generador de datos subyacente}, es decir, la variabilidad debida a que los conteos de coocurrencias son variables aleatorias. En cambio, los p-valores de permutaciones e intervalos de bootstrap de $\BiasWE$ sólo consideran \textbf{la variabilidad de los grupos de palabras de contexto}. Esto significa que deben elegirse varias palabras de contexto para poder realizar la inferencia. 
+
+En el límite, si $A$ y $B$ fueran listas de una sola palabra, no hay forma de estimar la incertidumbre para $\BiasWE$ con estos métodos, mientras que es perfectamente factible para $\BiasPMI$. Si en alguna aplicación queremos medir sesgos con listas de una sola palabra, los procedimientos de remuestreo empleados con $\BiasWE$ son inútiles, mientras que la prueba de log odds ratio funciona perfectamente bien para $\BiasPMI$.
+
+Otra ventaja del test parámetrico de log odds ratio para $\BiasPMI$ es que es computacionalmente barato en comparación con los procedimientos no parámatricos de bootstrap y permutaciones requeridos para $\BiasWE$. Éstos pueden ser muy lentos si queremos hacer inferencia sobre muchas palabras objetivo.
+
+Para ilustrar la diferencia entre los dos métodos, en la sección \ref{sec:experimento_variabilidad} compararemos la variabilidad estimada para $\BiasWE$ y $\BiasPMI$ en un experimento con datos reales.

@@ -1,0 +1,42 @@
+
+
+\begin{table}[h]
+  \centering
+  \begin{tabular}{lccccc}
+    \toprule
+    Sesgo                                    & Correlación   & PMI                & SGNS & FastText & GloVe              \\
+    \midrule
+    \multirow[c]{2}{*}{Sesgo de género}      & $r$           & 0.51               & 0.49 & 0.47     & 0.46               \\
+                                             & $r$ ponderado & 0.45               & 0.62 & 0.63     & 0.69               \\
+    \cline{1-6}
+    \multirow[c]{2}{*}{Sesgo de sentimiento} & $r$           & 0.43               & 0.59 & 0.59     & 0.58               \\
+                                             & $r$ ponderado & 0.34               & 0.66 & 0.66     & 0.64               \\
+    \cline{1-6}
+    \multirow[c]{2}{*}{Sesgo étnico}         & $r$           & {\color{gray}0.14} & 0.44 & 0.36     & {\color{gray}0.30} \\
+                                             & $r$ ponderado & 0.15               & 0.51 & 0.20     & {\color{gray}0.43} \\
+    \cline{1-6}
+    \bottomrule
+  \end{tabular}
+  \caption{
+    Coeficientes de correlación de Pearson entre el sesgo de acuerdo al juicio humano y el sesgo textual medido con cada. Los coeficientes son significativos con un nivel de confianza superior 99\%, exceptuando el $r$ y el $r$ ponderado de GloVe para el sesgo étnico, y el $r$ de PMI para el sesgo étnico, los cuales tienen p-valores $> 0,10$.
+  }
+  \label{tab:correlaciones}
+\end{table}
+
+
+% \begin{tabular}{llrrrr}
+%   \toprule
+%                                            &               & PMI  & SGNS & FastText & GloVe \\
+%   Sesgo                                    & Correlación   &      &      &          &       \\
+%   \midrule
+%   \multirow[c]{2}{*}{Sesgo de género}      & $r$           & 0.51 & 0.49 & 0.47     & 0.46  \\
+%                                            & $r$ ponderado & 0.45 & 0.62 & 0.63     & 0.69  \\
+%   \cline{1-6}
+%   \multirow[c]{2}{*}{Sesgo de sentimiento} & $r$           & 0.43 & 0.59 & 0.59     & 0.58  \\
+%                                            & $r$ ponderado & 0.34 & 0.66 & 0.66     & 0.64  \\
+%   \cline{1-6}
+%   \multirow[c]{2}{*}{Sesgo étnico}         & $r$           & 0.14 & 0.44 & 0.36     & 0.30  \\
+%                                            & $r$ ponderado & 0.15 & 0.51 & 0.20     & 0.43  \\
+%   \cline{1-6}
+%   \bottomrule
+% \end{tabular}
