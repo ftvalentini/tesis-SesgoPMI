@@ -1,16 +1,19 @@
 
-% Inspirado en:
-%   https://es.overleaf.com/latex/templates/tesis-universidad-de-murcia-umu-eidum/pspmjbxvpfff
+% Parcialmente inspirado en:
+%   * https://es.overleaf.com/latex/templates/tesis-universidad-de-murcia-umu-eidum/pspmjbxvpfff
+%   * https://es.overleaf.com/project/6387ed6c340cce9d7154730a
 % Notas: 
 %   - "estilos": variables.tex donde poner titulo, autor, etc... y otros de librerías etc...
 %   - "capitulos": capitulos
 %   - "capitulos/tablas": tablas
 %   - "img": imagenes
 
-\documentclass[a4paper,12pt,oneside]{book}
+\documentclass[a4paper, oneside, openright]{book}
+
 \input{./estilos/estilo-basico.tex} 
 \input{./estilos/estilo-capitulos.tex}
 \input{estilos/variables}
+
 
 \begin{document}
 
@@ -44,13 +47,19 @@
 
 %\setcounter{tocdepth}{1}
 %level -1: part, 0: chapter, 1: section, etc.
-\renewcommand{\baselinestretch}{0.1}\normalsize
+% \renewcommand{\baselinestretch}{0.1}\normalsize
+
 \tableofcontents
-\renewcommand{\baselinestretch}{0.3}\normalsize
+
+% \renewcommand{\baselinestretch}{0.3}\normalsize
+
 \listoffigures
-\renewcommand{\baselinestretch}{0.3}\normalsize
+
+% \renewcommand{\baselinestretch}{0.3}\normalsize
+
 \listoftables
-\renewcommand{\baselinestretch}{1.2}\normalsize
+
+% \renewcommand{\baselinestretch}{1.2}\normalsize
 
 
 %-------------------------------------------------------------------
@@ -58,15 +67,16 @@
 %-------------------------------------------------------------------
 
 \mainmatter % start arabic page numbering
-\pagestyle{headings}
+\pagestyle{plain}
+% \pagestyle{headings}
 
 % \def\tablename{Tabla}% para que denomine tabla a las tablas y no "cuadro"
 %\doublespacing
-\onehalfspace
+% \onehalfspace
 %\singlespace
-%\spacing{1.5}	
-\setlength{\parskip}{3mm} % separación entre párrafo
-\setlength{\parindent}{1cm} % indentación primera linea de párrafo
+%\spacing{1.5}
+% \setlength{\parskip}{3mm} % separación entre párrafo
+% \setlength{\parindent}{1cm} % indentación primera linea de párrafo
 
 \input{./capitulos/10-intro.tex}
 \input{./capitulos/20-antecedentes.tex}

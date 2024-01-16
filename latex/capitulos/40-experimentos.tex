@@ -81,9 +81,9 @@ Para cada uno de los sesgos medidos en sus respectivas palabras objetivo, calcul
 \begin{figure}[h]
     \centering
     \includegraphics[width=\textwidth]{img/grid_pvalues.png}
-    \caption{
+    \caption[p-valores en función del valor del sesgo para cada tipo de sesgo y cada método de medición]{
         p-valores (eje vertical) en función del valor del sesgo (eje horizontal) para cada tipo de sesgo y cada método de medición.
-        }
+    }
     \label{fig:pvalues}
 \end{figure}
 
@@ -99,7 +99,7 @@ Esta diferencia tan grande se debe a que el sesgo de sentimiento se computa con 
 \begin{figure}[h]
     \centering
     \includegraphics[width=\textwidth]{img/grid_ics.png}
-    \caption{
+    \caption[Amplitud de los intervalos de confianza al 95\% de $\BiasWE$ en función del valor del sesgo, para cada tipo de sesgo y cada método de entrenamiento de \emph{embeddings}]{
         Amplitud de los intervalos de confianza al 95\% de $\BiasWE$ (eje vertical) en función del valor del sesgo (eje horizontal), para cada tipo de sesgo y cada método de entrenamiento de \emph{embeddings}. En rojo se indica el promedio.
         }
     \label{fig:grid_ics_bias_we}
@@ -120,7 +120,7 @@ Ilustramos la ventaja de $\BiasPMI$ con algunos casos individuales de medición 
 
 % p-valor $< 10^{-300}$
 
-Si usamos, en cambio, por ejemplo, $\BiasWE$ con SGNS, obtenemos $\BiasWE(shanice) = 1,07$ con IC $=(-0,19; 1,81)$ y p-valor $= 0,24$; y $\BiasWE(wine) = -0,57$ con IC $=(-1,95; 1,82)$ y p-valor $= 0,44$. Los p-valores altos e intervalos de confianza amplios que incluyen al 0 no necesariamente quieren decir que no existen sesgos sistemáticos para estas palabras en el \emph{corpus}. Por el contrario, esto ocurre porque estamos computando el sesgo con listas de palabras pequeñas que no permiten sacar conclusiones fiables acerca de la variabilidad del sesgo, como delineamos más arriba. 
+Si usamos, en cambio, por ejemplo, $\BiasWE$ con SGNS, obtenemos \, $\BiasWE(shanice) = 1,07$ con IC $=(-0,19; 1,81)$ y p-valor $= 0,24$; y $\BiasWE(wine) = -0,57$ con IC $=(-1,95; 1,82)$ y p-valor $= 0,44$. Los p-valores altos e intervalos de confianza amplios que incluyen al 0 no necesariamente quieren decir que no existen sesgos sistemáticos para estas palabras en el \emph{corpus}. Por el contrario, esto ocurre porque estamos computando el sesgo con listas de palabras pequeñas que no permiten sacar conclusiones fiables acerca de la variabilidad del sesgo, como delineamos más arriba. 
 
 % los test de permutaciones de $\BiasWE$ tienden a detectar pocos sesgos significativos
 
@@ -136,7 +136,7 @@ El objetivo de este experimento no es encontrar qué método produce mayores cor
 \begin{figure}[H]
     \centering
     \includegraphics[width=0.85\textwidth]{img/grid_glasgow-gender.png}
-    \caption{
+    \caption[Relación entre el sesgo de género textual y de acuerdo al juicio humano en las palabras de \citet{lewis2020gender}]{
         Relación entre el sesgo de género textual y de acuerdo al juicio humano en las palabras de \citet{lewis2020gender}. Cada punto representa una palabra objetivo. Las rectas representan un ajuste lineal de los datos. En la segunda fila el ajuste pondera cada punto por el error estándar de la estimación de sesgo textual (los intervalos de confianza asociados no se muestran para mayor claridad).
     }
     \label{fig:grid_corr_genero}
@@ -145,7 +145,7 @@ El objetivo de este experimento no es encontrar qué método produce mayores cor
 \begin{figure}[H]
     \centering
     \includegraphics[width=0.85\textwidth]{img/grid_warriner-valence.png}
-    \caption{
+    \caption[Relación entre el sesgo de sentimiento textual y de acuerdo al juicio humano en las palabras de \citet{toney2021valnorm}]{
         Relación entre el sesgo de sentimiento textual y de acuerdo al juicio humano en las palabras de \citet{toney2021valnorm}. Cada punto representa una palabra objetivo. Las rectas representan un ajuste lineal de los datos. En la segunda fila el ajuste pondera cada punto por el error estándar de la estimación de sesgo textual (los intervalos de confianza asociados no se muestran para mayor claridad).
     }
     \label{fig:grid_corr_sentimiento}
@@ -154,7 +154,7 @@ El objetivo de este experimento no es encontrar qué método produce mayores cor
 \begin{figure}[H]
     \centering
     \includegraphics[width=0.85\textwidth]{img/grid_mturk-race.png}
-    \caption{
+    \caption[Relación entre el sesgo étnico textual y de acuerdo al juicio humano en las palabras de \citet{kozlowski2019geometry}]{
         Relación entre el sesgo étnico textual y de acuerdo al juicio humano en las palabras de \citet{kozlowski2019geometry}. Cada punto representa una palabra objetivo. Las rectas representan un ajuste lineal de los datos. En la segunda fila el ajuste pondera cada punto por el error estándar de la estimación de sesgo textual (los intervalos de confianza se indican con barras de error).
     }
     \label{fig:grid_corr_etnico}
